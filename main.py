@@ -10,11 +10,13 @@ def main():
 
     try:
 
-        current_path = pathlib.Path(__file__).parent.resolve()
-
         # Get SVN arguments from executed hook scripts command
         # Only works in Post-commit 
         args_list = sys.argv
+
+        print(args_list)
+
+        exe_path = args_list[0].replace('SVNCommitNotificator.exe', '')
 
         # Files
         f1 = open(args_list[1].replace('\\', '/'), "r", encoding='utf-8')
@@ -45,7 +47,7 @@ def main():
         #f5.close()
 
         # Open and read local config
-        local_config_path = os.path.join(current_path, 'local.config')
+        local_config_path = os.path.join(exe_path, 'local.config')
         with open(local_config_path, encoding='utf-8') as f_author:
             lines = f_author.readlines()
 
@@ -69,7 +71,7 @@ def main():
             return
 
         # Open and read hook config data
-        hookinfo_config_path = os.path.join(local_config_path, 'hookinfo.config')
+        hookinfo_config_path = os.path.join(exe_path, 'hookinfo.config')
         with open(hookinfo_config_path, encoding='utf-8') as f_hook_config:
             lines = f_hook_config.readlines()
 
@@ -82,9 +84,9 @@ def main():
             hook_config_line_datas = line.split('=')
             if hook_config_line_datas[0] == "HOOK_TARGET":
                 hook_target = hook_config_line_datas[1].strip()
-            elif hook_config_line_datas[0] == "HOOK_URL":
-                svn_repo_name = hook_config_line_datas[1].strip()
             elif hook_config_line_datas[0] == "REPO_NAME":
+                svn_repo_name = hook_config_line_datas[1].strip()
+            elif hook_config_line_datas[0] == "HOOK_URL":
                 hook_url = hook_config_line_datas[1].strip()
 
         if svn_repo_name == "":
