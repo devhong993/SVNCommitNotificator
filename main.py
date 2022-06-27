@@ -1,12 +1,17 @@
+import os
 import sys
 import logging
 import json
+import pathlib
 import requests
 from requests.structures import CaseInsensitiveDict
 
 def main():
 
     try:
+
+        current_path = pathlib.Path(__file__).parent.resolve()
+
         # Get SVN arguments from executed hook scripts command
         # Only works in Post-commit 
         args_list = sys.argv
@@ -40,7 +45,8 @@ def main():
         #f5.close()
 
         # Open and read local config
-        with open('local.config', encoding='utf-8') as f_author:
+        local_config_path = os.path.join(current_path, 'local.config')
+        with open(local_config_path, encoding='utf-8') as f_author:
             lines = f_author.readlines()
 
         # [AUTHOR] : author_name
@@ -53,24 +59,21 @@ def main():
             local_config_line_data = line.split('=')
             if local_config_line_data[0] == "AUTHOR":
                 svn_author = local_config_line_data[1].replace("\n", "")
-            if local_config_line_data[0] == "REPO_NAME":
-                svn_repo_name = local_config_line_data[1].replace("\n", "")
             if local_config_line_data[0] == "USE_NOTIFY_SYSTEM":
                 use_notify_system = local_config_line_data[1].lower() == "true"
 
         if svn_author == "":
             raise Exception("Cannot find author name!")
 
-        if svn_repo_name == "":
-            raise Exception("Cannot setup repository name!")
-
         if use_notify_system == False:
             return
 
         # Open and read hook config data
-        with open('hookinfo.config', encoding='utf-8') as f_hook_config:
+        hookinfo_config_path = os.path.join(local_config_path, 'hookinfo.config')
+        with open(hookinfo_config_path, encoding='utf-8') as f_hook_config:
             lines = f_hook_config.readlines()
 
+        # [REPO_NAME] : proj_name
         # [HOOK_TARGET] : DISCORD, MS_TEAMS
         # [HOOK_URL] : url_link
         hook_target = ""
@@ -80,7 +83,12 @@ def main():
             if hook_config_line_datas[0] == "HOOK_TARGET":
                 hook_target = hook_config_line_datas[1].strip()
             elif hook_config_line_datas[0] == "HOOK_URL":
+                svn_repo_name = hook_config_line_datas[1].strip()
+            elif hook_config_line_datas[0] == "REPO_NAME":
                 hook_url = hook_config_line_datas[1].strip()
+
+        if svn_repo_name == "":
+            raise Exception("Cannot setup repository name!")
 
         if hook_target == "":
             raise Exception("HOOK_TARGET is empty!")
